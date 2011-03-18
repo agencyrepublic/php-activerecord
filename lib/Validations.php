@@ -790,6 +790,46 @@ class Errors implements IteratorAggregate
 		return $full_messages;
 	}
 
+    /**
+    * Returns all the error messages as an array, including error key.
+    *
+    * <code>
+    * $model->errors->errors();
+    *
+    * # array(
+    * #  "name" => array("Name can't be blank"),
+    * #  "state" => array("State is the wrong length (should be 2 chars)")
+    * # )
+    * </code>
+    *
+    * @param array $closure Closure to fetch the errors in some other format (optional)
+    *                       This closure has the signature function($attribute, $message)
+    *                       and is called for each available error message.
+    * @return array
+    */
+    public function to_array($closure=null)
+    {
+         $errors = array();
+
+         if ($this->errors)
+         {
+             foreach ($this->errors as $attribute => $messages)
+             {
+                 foreach ($messages as $msg)
+                 {
+                     if (is_null($msg))
+                         continue;
+
+                     $errors[$attribute][] = ($message = Utils::human_attribute($attribute) . ' ' . $msg);
+
+                     if ($closure)
+                         $closure($attribute,$message);
+                 }
+             }
+         }
+         return $errors;
+    }
+
 	/**
 	 * Returns true if there are no error messages.
 	 * @return boolean
