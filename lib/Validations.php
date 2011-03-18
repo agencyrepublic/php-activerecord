@@ -92,7 +92,13 @@ class Validations
 	{
 		$this->model = $model;
 		$this->record = new Errors($this->model);
-		$this->validators = array_intersect(array_keys(Reflections::instance()->get(get_class($this->model))->getStaticProperties()), self::$VALIDATION_FUNCTIONS);
+        $this->klass = Reflections::instance()->get(get_class($this->model));
+        $this->validators = array_intersect(array_keys($this->klass->getStaticProperties()), self::$VALIDATION_FUNCTIONS);
+	}
+	
+	public function get_record()
+	{
+	    return $this->record;
 	}
 
 	/**
@@ -107,7 +113,7 @@ class Validations
 
 		foreach ($this->validators as $validate)
 		{
-			$attrs = $reflection->getStaticPropertyValue($validate);
+			$attrs = $this->klass->getStaticPropertyValue($validate);
 
 			foreach ($attrs as $attr)
 			{
@@ -134,8 +140,13 @@ class Validations
 		$reflection = Reflections::instance()->get(get_class($this->model));
 
 		foreach ($this->validators as $validate)
-			$this->$validate($reflection->getStaticPropertyValue($validate));
+			$this->$validate($this->klass->getStaticPropertyValue($validate));
 
+        $model_reflection = Reflections::instance()->get($this->model);
+        
+        if ($model_reflection->hasMethod('validate') && $model_reflection->getMethod('validate')->isPublic())
+            $this->model->validate();
+        
 		$this->record->clear_model();
 		return $this->record;
 	}
